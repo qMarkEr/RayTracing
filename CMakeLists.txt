@@ -14,5 +14,7 @@ add_executable(RayTracingSDL main.c
         Objects.c
         Objects.h
         list.c
-        list.h)
+        list.h
+        Camera.c
+        Camera.h)
 target_link_libraries(RayTracingSDL ${SDL2_LIBRARY} )

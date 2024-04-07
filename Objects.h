@@ -10,7 +10,7 @@ typedef struct {
 } triangle;
 
 typedef struct {
-  triangle** trigs;
+  triangle *faces;
   vec3 centroid;
   size_t count;
 } object;

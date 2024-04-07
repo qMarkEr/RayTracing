@@ -7,16 +7,34 @@ void CalculateTrigNormal(triangle* a) {
   a->n = norm(&crs);
 }
 
+vec3* ToVecArray(list* lst) {
+  vec3* res = malloc(sizeof (vec3) * lst->length);
+  for (int i = 0; i < lst->length; ++i)
+    res[i] = *(vec3*)atIndex(lst, i);
+  return res;
+}
+
+triangle* ToTrigArray(list* lst) {
+  triangle *res = malloc(sizeof (triangle) * lst->length);
+  for (int i = 0; i < lst->length; ++i)
+    res[i] = *(triangle *)atIndex(lst, i);
+  return res;
+}
+
 object* load_data(FILE* fptr) {
-  list* vertex = init_lst();
+  list* vertices = init_lst();
   char* data = NULL;
-  object* model = NULL;
+  vec3 *vertices_array = NULL;
+  list *triangles = init_lst();
+  object* model = malloc(sizeof(object));
+  model->count = 0;
   vec3 centroid = { 0, 0, 0 };
   size_t len = 0;
+
   while (getline(&data, &len, fptr) != -1) {
     if (data[0] == 'v') {
-      vec3 vert = { 0, 0, 0 };
-      char* str = NULL;
+      vec3 vert = {0, 0, 0};
+      char *str = NULL;
       char *endptr = NULL;
 
       str = data + 2;
@@ -29,35 +47,33 @@ object* load_data(FILE* fptr) {
       token = strtok(NULL, " ");
       vert.y = -strtod(token, &endptr);
 
-      append(vertex, &vert, sizeof(vec3));
+      append(vertices, &vert, sizeof(vec3));
     }
     else if (data[0] == 'f') {
-      if (model == NULL) {
-        model = malloc(sizeof(model));
-        model->trigs = malloc(sizeof (triangle) * vertex->length);
-        model->count = 0;
-      }
-      char* str;
+      if (model->count == 0) vertices_array = ToVecArray(vertices);
+      triangle current_face;
+      char *str;
       char *endptr;
-      model->trigs[model->count] = malloc(sizeof(triangle));
 
       str = data + 2;
       char *token = strtok(str, " ");
-      vec3 temp_trig[3];
-      int j = 0;
-      while (token != NULL) {
-        temp_trig[j++] = *(vec3 *) atIndex(vertex, strtol(token, &endptr, 10) - 1);
-        token = strtok(NULL, " ");
-      }
-      model->trigs[model->count]->v0 = temp_trig[0];
-      model->trigs[model->count]->v1 = temp_trig[1];
-      model->trigs[model->count]->v2 = temp_trig[2];
-      CalculateTrigNormal(model->trigs[model->count]);
+      current_face.v0 = vertices_array[strtol(token, &endptr, 10) - 1];
+
+      token = strtok(NULL, " ");
+      current_face.v1 = vertices_array[strtol(token, &endptr, 10) - 1];
+
+      token = strtok(NULL, " ");
+      current_face.v2 = vertices_array[strtol(token, &endptr, 10) - 1];
+
+      CalculateTrigNormal(&current_face);
+      append(triangles, &current_face, sizeof(triangle));
       ++model->count;
     }
   }
+  model->faces = ToTrigArray(triangles);
   model->centroid = centroid;
-  destroy(vertex);
+  destroy(vertices);
+  destroy(triangles);
   return model;
 }
 
